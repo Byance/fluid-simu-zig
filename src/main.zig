@@ -91,8 +91,8 @@ const Fluid = struct {
         const y_scale = @divTrunc(y, scale);
         self.addDensity(x_scale, y_scale, @as(f32, @floatFromInt(rl.getRandomValue(1, 255))));
         const mouseD = rl.getMouseDelta();
-        const amount_x = mouseD.x * 10;
-        const amount_y = mouseD.y * 10;
+        const amount_x = mouseD.x * @as(f32, @floatFromInt(rl.getRandomValue(0, 1)));
+        const amount_y = mouseD.y * @as(f32, @floatFromInt(rl.getRandomValue(0, 1)));
         self.addVelocity(x_scale, y_scale, amount_x, amount_y);
     }
 
@@ -208,6 +208,7 @@ fn project(velocX: []f32, velocY: []f32, p: []f32, div: []f32, iter: i32, N: i32
         for (0..N_usize - 1) |i_usize| {
             const i = @as(i32, @intCast(i_usize));
             div[IX(N, i, j)] = -0.5 * (velocX[IX(N, i + 1, j)] - velocX[IX(N, i - 1, j)] + velocY[IX(N, i, j + 1)] - velocY[IX(N, i, j - 1)]) / N_f;
+            p[IX(N, i, j)] = 0;
         }
     }
     set_bnd(0, div, N);
@@ -218,8 +219,8 @@ fn project(velocX: []f32, velocY: []f32, p: []f32, div: []f32, iter: i32, N: i32
         const j = @as(i32, @intCast(j_usize));
         for (0..N_usize - 1) |i_usize| {
             const i = @as(i32, @intCast(i_usize));
-            velocX[IX(N, i, j)] -= 0.5 * (p[IX(N, i + 1, j)] - p[IX(N, i - 1, j)]) / N_f;
-            velocY[IX(N, i, j)] -= 0.5 * (p[IX(N, i, j + 1)] - p[IX(N, i, j - 1)]) / N_f;
+            velocX[IX(N, i, j)] -= 0.5 * (p[IX(N, i + 1, j)] - p[IX(N, i - 1, j)]) * N_f;
+            velocY[IX(N, i, j)] -= 0.5 * (p[IX(N, i, j + 1)] - p[IX(N, i, j - 1)]) * N_f;
         }
     }
     set_bnd(1, velocX, N);
@@ -278,8 +279,9 @@ fn advect(b: i32, d: []f32, d0: []f32, velocX: []f32, velocY: []f32, dt: f32, N:
             const j0i = @as(i32, @intFromFloat(j0));
             const j1i = @as(i32, @intFromFloat(j1));
 
-            d[IX(N, k, j)] = s0 * (t0 * d0[IX(N, k0i, j0i)] + t1 * d0[IX(N, k0i, j1i)]) +
-                s1 * (t0 * d0[IX(N, k1i, j0i)] + t1 * d0[IX(N, k1i, j1i)]);
+            d[IX(N, k, j)] = s0 *
+                (t0 * d0[IX(N, k0i, j0i)] + t1 * d0[IX(N, k0i, j1i)]) + s1 *
+                (t0 * d0[IX(N, k1i, j0i)] + t1 * d0[IX(N, k1i, j1i)]);
         }
     }
     set_bnd(b, d, N);
